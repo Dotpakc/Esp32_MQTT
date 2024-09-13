@@ -14,7 +14,7 @@ const char* password = PASSWORD;
 const char* mqtt_server = "192.168.3.26";
 
 WiFiClient espClient;
-PubSubClient client(espClient); // MQTT client
+PubSubClient client(espClient);
 
 void callback(char* topic, byte* payload, unsigned int length) {
   // led1 -> built-in LED 1 0 
@@ -27,16 +27,24 @@ void callback(char* topic, byte* payload, unsigned int length) {
   }
 
   // text -> oled 1306
+  Serial.println(length);
   if (strcmp(topic, "text") == 0) {
+    String text;
+    for (int i = 0; i < length; i++) {
+      text += (char)payload[i];
+    }
     u8g2.clearBuffer();
-    u8g2.setFont(u8g2_font_ncenB14_tr);
-    u8g2.drawStr(0, 20, (char*)payload);
+    u8g2.setFontMode(1);
+    u8g2.setFont(u8g2_font_cu12_tr);
+    u8g2.setCursor(0, 10);
+    u8g2.print(text);
     u8g2.sendBuffer();
   }
 }
 
 void setup() {
   Serial.begin(115200);
+  pinMode(LED_BUILTIN, OUTPUT);
 
   Wire.begin();
   u8g2.begin();
@@ -48,6 +56,15 @@ void setup() {
     Serial.println("Connecting to WiFi..");
   }
   Serial.println("Connected to the WiFi network");
+
+  client.setServer(mqtt_server, 1883);
+  client.setCallback(callback);
+
+  u8g2.clearBuffer();
+  u8g2.setFont(u8g2_font_6x12_tr);
+  u8g2.drawStr(0, 10, "Hello, World!");
+  u8g2.sendBuffer();
+
 }
 
 
